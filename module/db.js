@@ -110,6 +110,26 @@ class Db{
             })
         })
     }
+
+    /*
+    * 更新多条
+    * name 表明（collection name）
+    * where 查询条件
+    * params 新增参数 object
+    * */
+   updateAll(name,where,params){
+    return new Promise( (resolve,reject) => {
+        this.connect().then( db =>{
+            db.collection(name).updateOne(where,{$set:params},(err,res) => {
+                if(err){
+                    reject(err)
+                }else{
+                    resolve(res)
+                }
+            })
+        })
+    })
+}
     /*
     *删除
     *name 表明（collection name）
@@ -119,7 +139,7 @@ class Db{
     remove(name,where){
         return new Promise( (resolve,reject) => {
             this.connect().then( db =>{
-                db.collection(name).remove(where,(err,res) => {
+                db.collection(name).deleteOne(where,(err,res) => {
                     if(err){
                         reject(err)
                     }else{
