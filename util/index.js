@@ -4,10 +4,10 @@ function greaterThanTen (digital) {
     return digital >= 10 ? digital : '0' + digital;
 }
 module.exports = {
-    json:(status,data) => {
+    json:(status,data,err) => {
         return {
             status:status? true : false,
-            data:data? data : {}
+            data:data? data : {msg : err}
         }
     },
     token:(name) => {

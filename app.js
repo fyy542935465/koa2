@@ -8,7 +8,6 @@ const path = require('path')
 const koaBody = require('koa-body');
 const static = require('koa-static');
 const session = require('koa-session')
-const DB = require('./module/db')
 const routes = require('./router')
 const app = new koa();
 const cors = require('koa2-cors');
@@ -65,7 +64,7 @@ app.use( async (ctx,next) =>{
 })
 
 router.get('/', async (ctx,next) => {
-    await ctx.render('hello')
+    ctx.body = 'hello world'
 })
 
 routes(router);  //路由
