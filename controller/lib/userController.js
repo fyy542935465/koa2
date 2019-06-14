@@ -80,6 +80,9 @@ module.exports = {
             }
         }
         try{
+            if (ctx.request.files && ctx.request.files.imgFile) {
+                await util.removeImg(ctx,'user_id')
+            }
             let sql = params.avatar? `username="${params.username}",avatar="${params.avatar}"` : `username="${params.username}"`
             await DB.update('users', sql,'user_id',[params.user_id])
             let data = await DB.find('users','username',[params.username])
@@ -94,11 +97,28 @@ module.exports = {
             })
         }
     },
-    async removeImg(ctx, next) {
-
-    },
     async getUserList(ctx,next){
-        let data = await DB.query('select * from users',[])
-        ctx.body = util.json(1,data)
+        let params = ctx.query || ctx.request.query
+        params.page = params.page? params.page : 1
+        params.pageSize = params.pageSize? params.pageSize : 10000
+        let page = (params.page -1) * params.pageSize
+        let limit = `limit ${page},${params.pageSize}`
+        let list_sql = `select * from users ${limit}`
+        let count_sql = `select count(*) as count from users`
+
+        try{
+            let list = await DB.query(list_sql,[])
+            let count = await DB.query(count_sql,[])
+            ctx.body = util.json(1, {
+                list:list,
+                total:count[0].count,
+                page:parseInt(params.page),
+                pageSize:parseInt(params.pageSize == 10000? count[0].count : params.pageSize)
+            })
+        }catch(err){
+            ctx.body = util.json(0,{
+                masg:err
+            })
+        }
     }
 }

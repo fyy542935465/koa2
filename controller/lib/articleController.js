@@ -35,20 +35,38 @@ module.exports = {
     },
     async getArticleList(ctx, next) {
         let params = ctx.query || ctx.request.query
-        let data = []
-        let sql = `select a.username,a.avatar,b.* from users a
+        params.page = params.page? params.page : 1
+        params.pageSize = params.pageSize? params.pageSize : 10000
+        let page = (params.page -1) * params.pageSize
+        let list_sql_where = params.user_id? `where b.user_id="${params.user_id}"` : ''
+        let count_sql_where = params.user_id? `where user_id="${params.user_id}"` : ''
+        let list_sql = ` 
+        select a.username,a.avatar,b.* from users a
         inner join article b
-        on a.user_id = b.user_id`
-        if (!params.user_id) {
-            data = await DB.query(sql,[])
-        }else{
-            sql += ` where b.user_id="${params.user_id}"`
-            data = await DB.query(sql,[])
+        on a.user_id = b.user_id 
+        ${list_sql_where}
+        limit ${page},${params.pageSize}
+        `
+        let count_sql = `select count(*) as count from article ${count_sql_where}`
+
+        try{
+            let list = await DB.query(list_sql,[])
+            let count = await DB.query(count_sql,[])
+            list.forEach(item => {
+                delete item.edit_content
+            })
+
+            ctx.body = util.json(1, {
+                list:list,
+                total:count[0].count,
+                page:parseInt(params.page),
+                pageSize:parseInt(params.pageSize == 10000? count[0].count : params.pageSize)
+            })
+        }catch(err){
+            ctx.body = util.json(0,{
+                masg:err
+            })
         }
-        
-        data.forEach(item => {
-            delete item.edit_content
-        })
-        ctx.body = util.json(1, data)
-    },
+    
+    }
 }

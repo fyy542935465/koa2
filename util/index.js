@@ -1,5 +1,8 @@
 const jwt = require("jsonwebtoken")
 const fs = require('fs')
+const path = require('path')
+const DB = require('../db')
+
 function greaterThanTen (digital) {
     return digital >= 10 ? digital : '0' + digital;
 }
@@ -58,5 +61,15 @@ module.exports = {
             var seconds = date.getSeconds();
             return year + '-' + greaterThanTen(month) + '-' + greaterThanTen(day) + ' '
                 + greaterThanTen(hours) + ':' + greaterThanTen(minutes) + ':' + greaterThanTen(seconds);
+    },
+    async removeImg(ctx,id){
+        let params = ctx.body || ctx.request.body
+        let data = await DB.find('users','user_id',params[id])
+        if(data[0].avatar){
+            let imgPath = path.resolve(__dirname, '../../static-img/' + data[0].avatar)
+            if(data.length){
+                await fs.unlinkSync(imgPath)
+            }
+        }
     }
 }
