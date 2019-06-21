@@ -51,14 +51,17 @@ module.exports = {
             })
         })
     },
-    formateNowDate(){
-            var date = new Date();
+    formateNowDate(date,isDate){
+            var date = date? new Date(date) : new Date();
             var year = date.getFullYear();
             var month = date.getMonth() + 1;
             var day = date.getDate();
             var hours = date.getHours();
             var minutes = date.getMinutes();
             var seconds = date.getSeconds();
+            if(isDate){
+                return year + '-' + greaterThanTen(month) + '-' + greaterThanTen(day);
+            }
             return year + '-' + greaterThanTen(month) + '-' + greaterThanTen(day) + ' '
                 + greaterThanTen(hours) + ':' + greaterThanTen(minutes) + ':' + greaterThanTen(seconds);
     },

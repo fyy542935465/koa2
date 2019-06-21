@@ -1,6 +1,5 @@
 const DB = require('../../db')
 const util = require('../../util')
-const objectId = require('mongodb').ObjectId
 
 module.exports = {
     async save(ctx, next) {
@@ -10,7 +9,7 @@ module.exports = {
                 msg: 'user_id不能为空'
             })
         }
-        let create_time = util.formateNowDate(Date.now)
+        let create_time = util.formateNowDate()
         await DB.query('insert into article (id,user_id,title,edit_content,create_time) values (?,?,?,?,?)', [util.uid(), params.user_id, params.title, params.edit_content, create_time])
         ctx.body = util.json(1)
     },
@@ -24,9 +23,18 @@ module.exports = {
         }
         let data = await DB.find('article','id',[params.id])
         let user_data = await DB.find('users','user_id',[data[0].user_id])
+        let _sql = `
+        select a.username,a.avatar,b.* from users a
+        inner join comment b
+        on a.user_id = b.user_id 
+        ` 
+        let comment = await DB.query(_sql,[])
         data[0].username = user_data[0].username
         data[0].avatar = user_data[0].avatar
-        ctx.body = util.json(1, data[0])
+        ctx.body = util.json(1, {
+            acticleInfo:data[0],
+            commentList:comment
+        })
     },
     async delete(ctx, next) {
         let params = ctx.body || ctx.request.body
@@ -68,5 +76,22 @@ module.exports = {
             })
         }
     
+    },
+    async getHotArticleList(ctx,next){
+        ctx.body = util.json(1,{
+            list:[]
+        })
+    },
+    async saveComment(ctx,next){
+        let params = ctx.body || ctx.request.body
+        let create_time = util.formateNowDate()
+        try{
+            await DB.query(`insert into comment (article_id,user_id,comment,create_time) values ("${params.article_id}","${params.user_id}","${params.comment}","${create_time}")`,[])
+            ctx.body = util.json(1,{})
+        }catch(err){
+            ctx.body = util.json(0,{
+                msg:err
+            })
+        }
     }
 }

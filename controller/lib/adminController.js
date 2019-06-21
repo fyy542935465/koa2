@@ -50,5 +50,66 @@ module.exports = {
         if (res) {
             ctx.body = util.json(1)
         }
+    },
+    async count(ctx,next){
+        let params = ctx.body || ctx.request.body
+        let update_time = util.formateNowDate(+new Date(),true)
+        let user_id = params.user_id
+        let data = await DB.query(`select * from counts where user_id="${user_id}" and update_time="${update_time}"`)
+        if(!data.length){
+            try{
+                await DB.query('INSERT INTO counts (update_time,user_id) VALUES (?,?)',[update_time,user_id])
+                let count = await DB.query("select count(*) as _count from counts",[])
+                ctx.body = util.json(1,{
+                    count:count[0]._count
+                })
+            }catch(err){
+                console.log(err)
+            }
+        }else{
+            let count = await DB.query("select count(*) as _count from counts",[])
+            ctx.body = util.json(1,{
+                count:count[0]._count
+            })
+        }
+    },
+    async getBrowsingRecords(ctx,next){
+        let data = await DB.find('counts','',[])
+        let obj = {};
+        let res = data.reduce((cur, next) => {
+            let tag = obj[next.update_time]
+            if(tag){
+                cur[obj[next.update_time] - 1].count +=1
+            }else{
+                next.count = 1
+                obj[next.update_time] = cur.push(next)
+            }
+            return cur;
+        }, [])
+
+        let len = 15 - res.length
+        if(len > 0){
+            let dv = 86400000
+            let date = ''
+            let count = 0
+            for(let i = 0; i < len; i++){
+                date = util.formateNowDate(+new Date(res[0].update_time) - dv,true)
+                res.unshift({
+                    update_time:date,
+                    count:count
+                })
+            }
+        }
+        
+        let date_list = []
+        let count_list = []
+        res.forEach( item => {
+            date_list.push(item.update_time)
+            count_list.push(item.count)
+        })
+        ctx.body = util.json(1,{
+            dateList:date_list,
+            countList:count_list
+        })
     }
 }

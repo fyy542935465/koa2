@@ -17,7 +17,7 @@ module.exports = {
                 let hash = bcrypt.hashSync(params.password, 10)
                 params.token = util.token(params.username)
                 params.user_id = util.uid()
-                params.update_time = util.formateNowDate(Date.now)
+                params.update_time = util.formateNowDate()
                 params.is_admin = 0
                 let arr = [params.username,hash,params.token,params.user_id,params.is_admin,params.update_time]
                 await DB.query('INSERT INTO users (username,password,token,user_id,is_admin,update_time) VALUES (?,?,?,?,?,?)',arr)

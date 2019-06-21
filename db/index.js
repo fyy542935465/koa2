@@ -32,7 +32,8 @@ const query = function (sql, values) {
 }
 
 const find = (table, where, param) => {
-    let _sql = `SELECT * FROM ${table} WHERE ${where} = ?`
+    where = where? `WHERE ${where}  = ?` : '';
+    let _sql = `SELECT * FROM ${table} ${where}`
     return query(_sql, [param])
 }
 
