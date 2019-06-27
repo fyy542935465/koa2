@@ -24,16 +24,15 @@ module.exports = {
         let data = await DB.find('article','id',[params.id])
         let user_data = await DB.find('users','user_id',[data[0].user_id])
         let _sql = `
-        select a.username,a.avatar,b.* from users a
-        inner join comment b
-        on a.user_id = b.user_id 
+            select a.username,a.avatar,b.* from users a
+            inner join comment b
+            on a.user_id = b.user_id 
+            where article_id = "${params.id}"
         ` 
-        let comment = await DB.query(_sql,[])
         data[0].username = user_data[0].username
         data[0].avatar = user_data[0].avatar
         ctx.body = util.json(1, {
-            acticleInfo:data[0],
-            commentList:comment
+            acticleInfo:data[0]
         })
     },
     async delete(ctx, next) {
@@ -78,20 +77,70 @@ module.exports = {
     
     },
     async getHotArticleList(ctx,next){
-        ctx.body = util.json(1,{
-            list:[]
-        })
+        try{
+            let list = await DB.find('article','',[])
+            if(list.length){
+                list.sort(function compare(a,b) {
+                    return b.count - a.count
+                })
+            }
+
+            ctx.body = util.json(1,{
+                list:list.slice(0,5)
+            })
+
+        }catch(err){
+            ctx.body = util.json(0,{
+                msg:err
+            })
+        }
+        
+        
     },
     async saveComment(ctx,next){
         let params = ctx.body || ctx.request.body
         let create_time = util.formateNowDate()
+        let id = util.uid()
         try{
-            await DB.query(`insert into comment (article_id,user_id,comment,create_time) values ("${params.article_id}","${params.user_id}","${params.comment}","${create_time}")`,[])
+            await DB.query(`insert into comment (id,article_id,user_id,comment,create_time) values ("${id}","${params.article_id}","${params.user_id}","${params.comment}","${create_time}")`,[])
             ctx.body = util.json(1,{})
         }catch(err){
             ctx.body = util.json(0,{
                 msg:err
             })
         }
+    },
+    async count(ctx,next){
+        let params = ctx.body || ctx.request.body
+        try{
+            let data = await DB.find('article','id',[params.id])
+            let count = data[0].count
+            count += 1
+            await DB.query(`update article set count="${count}" where id="${params.id}"`)
+            ctx.body = util.json(1,{})
+        }catch(err){
+            ctx.body = util.json(0,{
+                msg:err
+            })
+        }
+    },
+    async comment(ctx,next){
+        let params = ctx.query || ctx.request.query
+        params.page = params.page? params.page : 1
+        params.pageSize = params.pageSize? params.pageSize : 10000
+        let page = (params.page -1) * params.pageSize
+        let _sql = ` 
+        select * from comment
+        where article_id = "${params.id}"
+        limit ${page},${params.pageSize}
+        `
+        let data = await DB.query(_sql,[])
+        let total = await DB.query(`select count(*) as count from comment where article_id="${params.id}"`,[])
+        ctx.body = util.json(1,{
+            list:data,
+            total:total[0].count,
+            page:parseInt(params.page),
+            pageSize:parseInt(params.pageSize == 10000? total[0].count : params.pageSize)
+        })
     }
 }
