@@ -1,0 +1,16 @@
+apps:
+  - name : "koa"
+    script : "app.js"
+    # watch : true
+    log_file : "../pm2Log/full-loan.log"
+    error_file : "../pm2Log/full-loan_err.log"
+    out_file : "../pm2Log/full-loan_out.log"
+    pid_file : "../pm2Log/full-loan.pid"
+#   instances : 2
+    exec_mode : "cluster"
+    env    :
+      NODE_ENV: development
+    env_production:
+      NODE_ENV: production
+    max_memory_restart : "4G"
+    log_date_format : "YYYY-MM-DD HH:mm:SS"
