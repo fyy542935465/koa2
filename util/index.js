@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken")
 const fs = require('fs')
 const path = require('path')
 const DB = require('../db')
+const redis = require('./redis')
 
 function greaterThanTen (digital) {
     return digital >= 10 ? digital : '0' + digital;
@@ -74,5 +75,6 @@ module.exports = {
                 await fs.unlinkSync(imgPath)
             }
         }
-    }
+    },
+    redis:redis
 }

@@ -11,6 +11,7 @@ const session = require('koa-session')
 const routes = require('./router')
 const app = new koa();
 const cors = require('koa2-cors');
+const middleware = require('./middleware')
 app.keys = ['some secret hurr'];
 const CONFIG = {
     key: 'koa:sess',   //cookie key (default is koa:sess)
@@ -58,6 +59,7 @@ app.use(cors());
 //     }
 // }));
 
+middleware(app)
 
 app.use( async (ctx,next) =>{
     await next();

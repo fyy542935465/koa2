@@ -56,6 +56,7 @@ module.exports = {
                     msg: '密码错误'
                 })
             } else {
+                util.redis.set('token',data[0].token, 'EX', 1800);
                 ctx.body = util.json(1, {
                     token: data[0].token,
                     user_id: data[0].user_id,
