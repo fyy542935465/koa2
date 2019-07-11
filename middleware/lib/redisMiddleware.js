@@ -3,8 +3,9 @@ module.exports = () => {
     return async (ctx,next) => {
         let path = ctx.path
         if(path != '/api/login' && path != '/api/register'){
-            let token = ctx.request.headers.authorization
-            let res = await util.redis.get('token')
+            let authorization = ctx.request.headers.authorization
+            let token = authorization.split('|')[1]
+            let res = await util.redis.get(authorization.split('|')[0])
             if(res == token){
                 await next();
             }else{

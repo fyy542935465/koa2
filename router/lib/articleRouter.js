@@ -8,4 +8,6 @@ module.exports = (router) => {
     router.post('/api/article/comment/save',ARTICLECONTROLLER.saveComment)
     router.get('/api/article/comment',ARTICLECONTROLLER.comment)
     router.post('/api/article/detail/count',ARTICLECONTROLLER.count)
+    router.post('/api/article/comment/praise',ARTICLECONTROLLER.praise)
+    router.post('/api/article/comment/reply',ARTICLECONTROLLER.reply)
 }

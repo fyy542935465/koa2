@@ -1,6 +1,5 @@
 const DB = require('../../db')
 const util = require('../../util')
-
 module.exports = {
     async save(ctx, next) {
         let params = ctx.body || ctx.request.body
@@ -52,6 +51,7 @@ module.exports = {
         inner join article b
         on a.user_id = b.user_id 
         ${list_sql_where}
+        ORDER BY create_time desc
         limit ${page},${params.pageSize}
         `
         let count_sql = `select count(*) as count from article ${count_sql_where}`
@@ -129,18 +129,73 @@ module.exports = {
         params.page = params.page? params.page : 1
         params.pageSize = params.pageSize? params.pageSize : 10000
         let page = (params.page -1) * params.pageSize
-        let _sql = ` 
-        select * from comment
+        let _sql =
+        `select a.username,a.avatar,b.* from users a
+        inner join comment b
+        on a.user_id = b.user_id 
         where article_id = "${params.id}"
+        ORDER BY create_time desc
         limit ${page},${params.pageSize}
         `
         let data = await DB.query(_sql,[])
         let total = await DB.query(`select count(*) as count from comment where article_id="${params.id}"`,[])
+        let replyList = await DB.query(`
+        select a.username,a.avatar,b.* from users a
+        inner join reply_comment b
+        on a.user_id = b.user_id
+        `,[])
+        data.forEach( item => {
+            let arr = [];
+            replyList.forEach( i => {
+                if(item.id == i.comment_id){
+                    arr.push(i)
+                }
+            }) 
+            item.reply_comment = arr
+        })
         ctx.body = util.json(1,{
             list:data,
             total:total[0].count,
             page:parseInt(params.page),
             pageSize:parseInt(params.pageSize == 10000? total[0].count : params.pageSize)
         })
+    },
+    async praise(ctx,next){
+        let params = ctx.body || ctx.request.body
+        let data = await DB.find('comment','id',[params.id])
+        if(data.length){
+            let praiseIds = data[0].praise_ids
+            let flag = true
+            if(praiseIds){
+                praiseIds = praiseIds.split(',')
+                praiseIds.forEach( item =>{
+                    if(item == params.user_id){
+                        flag = false
+                    }
+                })
+            }
+            if(flag){
+                praiseIds = praiseIds && praiseIds.length? praiseIds : []
+                praiseIds.push(params.user_id)
+                let praise = data[0].praise + 1
+                await DB.update('comment',`praise="${praise}",praise_ids="${praiseIds.join(',')}"`,'id',[params.id])
+                ctx.body = util.json(1,{})
+            }else{
+                ctx.body = util.json(0,{
+                    msg:'你已经赞过啦'
+                })
+            }
+        }
+    },
+    async reply(ctx,next){
+        let params = ctx.body || ctx.request.body
+        try{
+            await DB.query(`insert into reply_comment (id,comment_id,user_id,comment,create_time,reply_id,reply_name) values ("${util.uid()}","${params.comment_id}","${params.user_id}","${params.comment}","${util.formateNowDate()}","${params.reply_id}","${params.reply_name}")`,[])
+            ctx.body = util.json(1,{})
+        }catch(err){
+            ctx.body = util.json(0,{
+                msg:err
+            })
+        }
     }
 }

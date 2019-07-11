@@ -51,14 +51,15 @@ module.exports = {
             })
         } else {
             let f = await bcrypt.compare(params.password, data[0].password)
+            let pre = 'token' + Date.now()
             if (!f) {
                 ctx.body = util.json(0, {
                     msg: '密码错误'
                 })
             } else {
-                util.redis.set('token',data[0].token, 'EX', 1800);
+                util.redis.set(pre,data[0].token, 'EX', 1800);
                 ctx.body = util.json(1, {
-                    token: data[0].token,
+                    token: pre + '|' + data[0].token,
                     user_id: data[0].user_id,
                     super_admin:data[0].super_admin,
                     is_admin:data[0].is_admin
