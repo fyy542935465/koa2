@@ -36,8 +36,17 @@ module.exports = {
     },
     async delete(ctx, next) {
         let params = ctx.body || ctx.request.body
-        let res = await DB.remove('article', 'id',[params.id])
-        ctx.body = util.json(1)
+        try{
+            await DB.remove('article', 'id',[params.id])
+            await DB.remove('comment','article_id',[params.id])
+            await DB.remove('reply_comment','article_id',[params.id])
+            ctx.body = util.json(1)
+        }catch(err){
+            ctx.body = util.json(1,{
+                msg:err
+            })
+        }
+        
     },
     async getArticleList(ctx, next) {
         let params = ctx.query || ctx.request.query
@@ -190,7 +199,7 @@ module.exports = {
     async reply(ctx,next){
         let params = ctx.body || ctx.request.body
         try{
-            await DB.query(`insert into reply_comment (id,comment_id,user_id,comment,create_time,reply_id,reply_name) values ("${util.uid()}","${params.comment_id}","${params.user_id}","${params.comment}","${util.formateNowDate()}","${params.reply_id}","${params.reply_name}")`,[])
+            await DB.query(`insert into reply_comment (id,comment_id,user_id,comment,create_time,reply_id,reply_name,article_id) values ("${util.uid()}","${params.comment_id}","${params.user_id}","${params.comment}","${util.formateNowDate()}","${params.reply_id}","${params.reply_name}","${params.article_id}")`,[])
             ctx.body = util.json(1,{})
         }catch(err){
             ctx.body = util.json(0,{

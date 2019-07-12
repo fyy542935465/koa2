@@ -47,12 +47,6 @@ const remove = (table,where,value) => {
     return query(_sql, [value])
 }
 
-const count = table => {
-    let _sql = `select count(*) as count from ${table}`
-    return query(_sql,[])
-}
-
-
 module.exports = {
     query,
     find,
